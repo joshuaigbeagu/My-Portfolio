@@ -1917,6 +1917,7 @@
     }
   }
 </style>
+<script src="https://www.google.com/recaptcha/api.js?render=6LetIGYtAAAAAE1nWYgbJyN0gLcVCvWH_4FxdbLd"></script>
 </head>
 <body>
 
@@ -2699,6 +2700,10 @@
       btn.innerHTML = 'Message sent ✓';
       btn.disabled = true;
       form.reset();
+      setTimeout(() => {
+        btn.innerHTML = 'Discuss Your Project';
+        btn.disabled = false;
+      }, 3000);
       return;
     }
 
@@ -2720,6 +2725,14 @@
     btn.disabled = true;
 
     try {
+      const token = await new Promise((resolve, reject) => {
+        grecaptcha.ready(() => {
+          grecaptcha.execute('6LetIGYtAAAAAE1nWYgbJyN0gLcVCvWH_4FxdbLd', { action: 'contact_form' })
+            .then(resolve)
+            .catch(reject);
+        });
+      });
+
       const res = await fetch('https://hook.eu1.make.com/sy8eaesnug34w4s7gy7bfmrhzw4jr3qp', {
         method: 'POST',
         headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -2727,13 +2740,18 @@
           first_name: firstName,
           last_name: lastName,
           email: email,
-          message: message
+          message: message,
+          recaptcha_token: token
         })
       });
 
       if (res.ok) {
         btn.textContent = 'Message sent ✓';
         form.reset();
+        setTimeout(() => {
+          btn.innerHTML = originalContent;
+          btn.disabled = false;
+        }, 3000);
       } else {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Formspree returned an error');
